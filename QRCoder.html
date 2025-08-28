@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QR Contact Hub — آفلاین</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#ff3b3b;--text:#e6eef8}
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Vazir',sans-serif;background:linear-gradient(180deg,#071128 0%, #0b1b2c 100%);color:var(--text);}
+    .wrap{max-width:720px;margin:28px auto;padding:20px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.04);padding:18px;border-radius:14px}
+    h1{margin:0 0 12px;font-size:20px}
+    .actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    a.btn{display:inline-flex;align-items:center;justify-content:flex-start;gap:10px;padding:12px;border-radius:10px;text-decoration:none;color:var(--text);background:transparent;border:1px solid rgba(255,255,255,0.04)}
+    .small{font-size:13px;color:rgba(230,238,248,0.75);margin-top:8px}
+    .controls{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
+    input[type=text],input[type=email]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text)}
+    label{display:block;margin-top:10px;font-size:13px;color:rgba(230,238,248,0.9)}
+    .row{display:flex;gap:10px}
+    .qrwrap{display:flex;gap:14px;align-items:center;margin-top:12px}
+    canvas, img.qr{width:180px;height:180px;border-radius:10px;background:#fff;padding:6px}
+    .muted{color:rgba(230,238,248,0.6);font-size:13px}
+    .note{font-size:13px;color:rgba(230,238,248,0.8);margin-top:8px}
+    button.primary{background:var(--accent);color:#fff;padding:10px 12px;border-radius:10px;border:0;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);padding:10px 12px;border-radius:10px;cursor:pointer}
+    footer{margin-top:18px;font-size:12px;color:rgba(230,238,248,0.6)}
+    @media (max-width:520px){.actions{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="card">
+      <h1>QR Contact Hub — صفحهٔ تماس آفلاین</h1>
+      <p class="small">این فایل را باز کنید، اطلاعات خود را وارد کنید، سپس با «ساخت QR» یک QR حاوی همین صفحه (data URL) ساخته و دانلود کنید. وقتی دیگران QR را اسکن کنند، همان صفحهٔ سادهٔ دکمه‌ها روی موبایل‌شان باز می‌شود و با لمس هر گزینه وارد اپ خواهند شد (اگر نصب باشد).</p>
+
+      <!-- editable fields -->
+      <label>شماره تماس (با کد کشور، مثال: +98912...)</label>
+      <input id="phone" type="text" placeholder="+98912..." value="+989121234567">
+
+      <label>شماره واتساپ (بدون + یا با، نسخه wa.me از شماره بدون +)</label>
+      <input id="wa" type="text" placeholder="989121234567" value="989121234567">
+
+      <label>آیدی تلگرام (بدون @)</label>
+      <input id="tg" type="text" placeholder="username" value="your_telegram">
+
+      <label>نام کاربری اینستاگرام</label>
+      <input id="ig" type="text" placeholder="username" value="your_instagram">
+
+      <label>ایمیل</label>
+      <input id="email" type="email" placeholder="you@example.com" value="you@example.com">
+
+      <label>آدرس (متن یا مختصات lat,lng)</label>
+      <input id="addr" type="text" placeholder="Tehran, Iran OR 35.6892,51.3890" value="Tehran, Iran">
+
+      <div class="controls">
+        <button class="primary" id="build">ساخت صفحه و پیش‌نمایش</button>
+        <button class="ghost" id="buildAndQR">ساخت + تولید QR (PNG)</button>
+        <button class="ghost" id="downloadHtml">دانلود HTML</button>
+      </div>
+
+      <div id="previewArea" style="margin-top:14px;display:none">
+        <div style="background:#071124;border-radius:12px;padding:12px">
+          <div id="preview"></div>
+          <div class="qrwrap">
+            <canvas id="qrCanvas" style="display:none"></canvas>
+            <img id="qrImg" class="qr" style="display:none" alt="QR code"/>
+            <div>
+              <div class="muted">پیش‌نمایش QR / تصویر</div>
+              <div class="note">(اگر QR ساخته شد، روی تصویر راست کلیک کنید و ذخیره کنید)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">* اگر می‌خواهید کاملاً آفلاین کار کنید: این فایل به اینترنت نیاز ندارد تا صفحهٔ تماس را نمایش دهد. برای تولید QR در همین صفحه از یک کتابخانه‌ی JS استفاده شده که از CDN بارگیری می‌شود. اگر می‌خواهید نسخهٔ کاملاً آفلاین (با کد کتابخانه داخل فایل) بخواهید لطفاً به من اطلاع بده تا نسخهٔ inlined را بفرستم.</p>
+
+      <footer>نسخهٔ آزمایشی — اطلاعات نمونه در فیلدها قرار گرفته‌اند. برای نهایی‌سازی اطلاعات را تغییر دهید و QR بسازید.</footer>
+    </div>
+  </main>
+
+  <!-- QR library (CDN). If you want full offline, reply and I'll inline the lib so no net required -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    function buildContactHTML(data){
+      const esc = s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const tel = data.phone ? ('tel:'+data.phone) : '#';
+      const wa = data.wa ? ('https://wa.me/'+data.wa.replace(/^\+/,'').replace(/^0+/,'').replace(/\s+/g,'')) : '#';
+      const tg = data.tg ? ('https://t.me/'+encodeURIComponent(data.tg)) : '#';
+      const ig = data.ig ? ('https://instagram.com/'+encodeURIComponent(data.ig)) : '#';
+      const mail = data.email ? ('mailto:'+data.email) : '#';
+
+      let mapLink = '#';
+      if(data.addr){
+        if(/^-?\d+\.?\d*\s*,\s*-?\d+\.?\d*$/.test(data.addr)){
+          mapLink = 'geo:'+data.addr.replace(/\s+/g,'');
+        }else{
+          mapLink = 'https://maps.google.com/?q='+encodeURIComponent(data.addr);
+        }
+      }
+
+      return `<!doctype html><html lang=fa dir=rtl><meta charset=utf-8><meta name=viewport content=width=device-width,initial-scale=1><title>تماس سریع</title><style>body{font-family:system-ui,-apple-system,Roboto,\"Vazir\",sans-serif;background:#ffffff;color:#111;margin:0;padding:18px}.c{max-width:640px;margin:0 auto}.btn{display:block;padding:12px 14px;margin:10px 0;border-radius:10px;text-decoration:none;color:#111;background:#f5f7fb;border:1px solid #e7eef8}</style><div class=c><h1>تماس سریع</h1><a class=btn href="${tel}">📞 تماس: ${esc(data.phone)}</a><a class=btn href="${wa}">💬 واتساپ</a><a class=btn href="${tg}">📨 تلگرام</a><a class=btn href="${ig}">📷 اینستاگرام</a><a class=btn href="${mail}">✉️ ایمیل</a><a class=btn href="${mapLink}">📍 آدرس: ${esc(data.addr)}</a><p style="color:#555;font-size:13px">اگر اپلیکیشن مربوطه نصب باشد، با لمس دکمه‌ها وارد آن اپ می‌شوید.</p></div></html>`;
+    }
+
+    function showPreview(html){
+      const p = document.getElementById('preview');
+      p.innerHTML = html;
+      document.getElementById('previewArea').style.display = 'block';
+    }
+
+    function getFormData(){
+      return {
+        phone: document.getElementById('phone').value.trim(),
+        wa: document.getElementById('wa').value.trim(),
+        tg: document.getElementById('tg').value.trim(),
+        ig: document.getElementById('ig').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        addr: document.getElementById('addr').value.trim()
+      }
+    }
+
+    document.getElementById('build').addEventListener('click',()=>{
+      const d = getFormData();
+      const html = buildContactHTML(d);
+      showPreview(html);
+      document.getElementById('qrImg').style.display='none';
+      document.getElementById('qrCanvas').style.display='none';
+    });
+
+    document.getElementById('buildAndQR').addEventListener('click',()=>{
+      const d = getFormData();
+      const html = buildContactHTML(d);
+
+      showPreview(html);
+
+      const prefix = 'data:text/html;charset=utf-8,';
+      const dataUrl = prefix + encodeURIComponent(html);
+
+      const tmp = document.createElement('div');
+      tmp.style.position='absolute';tmp.style.left='-9999px';document.body.appendChild(tmp);
+      tmp.innerHTML = '';
+      const qrcode = new QRCode(tmp, {text: dataUrl, width:512, height:512, correctLevel: QRCode.CorrectLevel.Q});
+      setTimeout(()=>{
+        const img = tmp.querySelector('img');
+        if(img){
+          document.getElementById('qrImg').src = img.src;
+          document.getElementById('qrImg').style.display='block';
+        }else{
+          const canvas = tmp.querySelector('canvas');
+          if(canvas){
+            document.getElementById('qrImg').src = canvas.toDataURL('image/png');
+            document.getElementById('qrImg').style.display='block';
+          }
+        }
+        tmp.remove();
+      }, 300);
+    });
+
+    document.getElementById('downloadHtml').addEventListener('click',()=>{
+      const d = getFormData();
+      const html = buildContactHTML(d);
+      const blob = new Blob([html],{type:'text/html;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'contact_hub.html';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  </script>
+</body>
+</html>
