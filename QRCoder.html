@@ -1,97 +1,47 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <title>QR Contact Hub</title>
-  <link href="https://fonts.googleapis.com/css2?family=Vazir&display=swap" rel="stylesheet">
-  <style>
-    * { box-sizing:border-box; }
-    body { font-family:'Vazir', sans-serif; background:#0f0f0f; color:white; margin:0; padding:0; display:flex; flex-direction:column; align-items:center; min-height:100vh; }
-    h1 { margin-top:30px; color:#d6336c; text-align:center; }
-    .container { background: rgba(255,255,255,0.05); padding:20px; border-radius:15px; margin:20px; width:90%; max-width:400px; display:flex; flex-direction:column; }
-    label { margin-top:10px; margin-bottom:5px; font-weight:bold; }
-    input { padding:10px; border-radius:8px; border:none; margin-bottom:10px; outline:none; font-size:1rem; }
-    input:focus { box-shadow:0 0 8px #d6336c; }
-    button { padding:12px; margin-top:10px; border:none; border-radius:8px; background:#d6336c; color:white; font-weight:bold; cursor:pointer; transition:0.3s; }
-    button:hover { background:#a6003a; transform:scale(1.05); }
-    canvas { margin-top:20px; border-radius:15px; background:white; }
-    #downloadBtn { display:none; background:#00bfff; margin-top:10px; }
-    @media(max-width:500px) {
-      .container { width:95%; }
-      input { font-size:0.9rem; }
-      button { font-size:0.9rem; }
-    }
-  </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-</head>
-<body>
-
-  <h1>QR Contact Hub</h1>
-
-  <div class="container">
-    <label>شماره تماس</label>
-    <input id="phone" placeholder="+98912xxxxxxx">
-    
-    <label>واتساپ (بدون +)</label>
-    <input id="wa" placeholder="98912xxxxxxx">
-    
-    <label>تلگرام (آیدی)</label>
-    <input id="tg" placeholder="telegram_username">
-    
-    <label>اینستاگرام</label>
-    <input id="ig" placeholder="instagram_username">
-    
-    <label>ایمیل</label>
-    <input id="email" placeholder="you@example.com">
-    
-    <label>محل کار / آدرس</label>
-    <input id="addr" placeholder="Tehran, Iran">
-
-    <button onclick="generateQR()">ساخت QR</button>
-    <button id="downloadBtn" onclick="downloadQR()">دانلود QR</button>
-    <canvas id="qr-code" width="200" height="200"></canvas>
-  </div>
-
-  <script>
-    var qr = new QRious({ element: document.getElementById('qr-code'), size:200 });
-
-    function generateQR() {
-      var url = "https://SethVolkanovski.github.io/karlancer/QRCoder.html";
-
-      // گرفتن داده‌های ورودی (اختیاری اضافه به query string)
-      var phone = document.getElementById('phone').value.trim();
-      var wa = document.getElementById('wa').value.trim();
-      var tg = document.getElementById('tg').value.trim();
-      var ig = document.getElementById('ig').value.trim();
-      var email = document.getElementById('email').value.trim();
-      var addr = document.getElementById('addr').value.trim();
-
-      var params = new URLSearchParams();
-      if(phone) params.append("phone", phone);
-      if(wa) params.append("wa", wa);
-      if(tg) params.append("tg", tg);
-      if(ig) params.append("ig", ig);
-      if(email) params.append("email", email);
-      if(addr) params.append("addr", addr);
-
-      if(Array.from(params).length > 0) {
-        url += "?" + params.toString();
+// Phone (tel:)
+  (function(){
+    const p = normalizePhone(CONFIG.phone);
+    const a = el("link-phone");
+    if(p){
+      a.href = tel:${p};
+      // اگر دسکتاپ بود، پیام راهنما نشان بده
+      if(!isMobile){
+        a.addEventListener("click", function(e){
+          e.preventDefault();
+          alert("این لینک روی گوشی Dialer را باز می‌کند. برای تست واقعی، روی موبایل باز کنید:\n" + tel:${p});
+        });
       }
+    } else { a.classList.add("hidden"); }
+  })();
 
-      qr.value = url;
+  // Email (mailto)
+  (function(){
+    const mail = safeEmail(CONFIG.email);
+    const a = el("link-email");
+    if(mail){
+      const params = new URLSearchParams();
+      if(CONFIG.emailSubject) params.set("subject", CONFIG.emailSubject);
+      if(CONFIG.emailBody)    params.set("body", CONFIG.emailBody);
+      const qp = params.toString();
+      a.href = mailto:${mail}${qp ? ("?" + qp) : ""};
+      if(!isMobile){
+        a.addEventListener("click", function(e){
+          // روی دسکتاپ هم معمولاً اپ ایمیل باز می‌شود، ولی اگر نبود:
+          setTimeout(()=>{},0);
+        });
+      }
+    } else { a.classList.add("hidden"); }
+  })();
 
-      // نمایش دکمه دانلود
-      document.getElementById('downloadBtn').style.display = "inline-block";
-    }
+  // Address / Maps
+  if(CONFIG.addressText){
+    el("link-address").href = mapLink(CONFIG.addressText);
+  } else { el("link-address").classList.add("hidden"); }
 
-    function downloadQR() {
-      var canvas = document.getElementById('qr-code');
-      var link = document.createElement('a');
-      link.href = canvas.toDataURL("image/png");
-      link.download = "ContactHub_QR.png";
-      link.click();
-    }
-  </script>
-
+  // اگر همه خالی شد، هشدار بده
+  const allHidden = [...document.querySelectorAll(".links a")].every(x=>x.classList.contains("hidden"));
+  if(allHidden) el("warn").classList.remove("hidden");
+})();
+</script>
 </body>
 </html>
